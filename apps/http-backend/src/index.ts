@@ -21,7 +21,6 @@ app.post("/signin", middleware, (req, res) => {
     res.json({ message: "Incorrect inputs" });
     return;
   }
-
   const userId = 1;
   const token = jwt.sign({ userId }, JWT_SECRET);
   res.json({ token });
