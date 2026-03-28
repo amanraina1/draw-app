@@ -6,7 +6,7 @@
   "scripts": {
     "build": "tsc -b",
     "dev": "node ./dist/index.js",
-    "start": "npm run build && npm run start"
+    "start": "npm run build && npm run dev"
   },
   "dependencies": {
     "@types/jsonwebtoken": "^9.0.10",
