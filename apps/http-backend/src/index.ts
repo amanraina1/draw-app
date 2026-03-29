@@ -29,35 +29,68 @@ app.post("/signup", async (req, res) => {
     res.json({ userId: user.id });
   } catch (e) {
     res.status(411).json({
-      message: "User already exists",
+      message: "User already exists with this username",
     });
   }
 });
 
-app.get("/", (req, res) => {
-  return res.send({ success: true, message: "Success !!" });
-});
+app.post("/signin", async (req, res) => {
+  const parsedData = signinSchema.safeParse(req.body);
 
-app.post("/signin", middleware, (req, res) => {
-  const data = signinSchema.safeParse(req.body);
-
-  if (!data.success) {
+  if (!parsedData.success) {
     res.json({ message: "Incorrect inputs" });
     return;
   }
-  const userId = 1;
-  const token = jwt.sign({ userId }, JWT_SECRET);
+
+  const user = await prismaClient.user.findFirst({
+    where: {
+      email: parsedData.data.username,
+      password: parsedData.data.password,
+    },
+  });
+
+  if (!user) {
+    res.status(403).json({ message: "Not authorized!!" });
+    return;
+  }
+
+  const token = jwt.sign({ userId: user.id }, JWT_SECRET);
   res.json({ token });
 });
 
-app.post("/room", middleware, (req, res) => {
-  const data = createRoomSchema.safeParse(req.body);
+app.post("/room", middleware, async (req, res) => {
+  const parsedData = createRoomSchema.safeParse(req.body);
 
-  if (!data.success) {
+  if (!parsedData.success) {
     res.json({ message: "Incorrect inputs" });
     return;
   }
-  res.json({ roomId: 123 });
+
+  const room = await prismaClient.room.findFirst({
+    where: {
+      slug: parsedData.data.name,
+    },
+  });
+
+  if (room) {
+    res.status(411).json({ message: "Room already exists with this name" });
+    return;
+  }
+
+  // @ts-ignore
+  const userId = req.userId;
+
+  try {
+    const roomData = await prismaClient.room.create({
+      data: {
+        slug: parsedData.data.name,
+        adminId: userId,
+      },
+    });
+    res.json({ roomId: roomData.id });
+  } catch (e) {
+    res.status(411).json({ message: "Error !!" });
+  }
 });
 
 app.listen(3001, () => {
