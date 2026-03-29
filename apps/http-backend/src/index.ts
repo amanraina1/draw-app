@@ -93,6 +93,19 @@ app.post("/room", middleware, async (req, res) => {
   }
 });
 
+app.get("/chat/:roomId", (req, res) => {
+  const roomId = Number(req.params.roomId);
+  const messages = prismaClient.chat.findMany({
+    where: {
+      roomId,
+    },
+    orderBy: { id: "desc" },
+    take: 50,
+  });
+
+  res.status(200).json({ messages });
+});
+
 app.listen(3001, () => {
   console.log("App is listening at port: 3001");
 });
