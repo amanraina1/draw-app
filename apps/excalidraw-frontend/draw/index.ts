@@ -19,6 +19,7 @@ export async function initDraw(
   canvas: HTMLCanvasElement,
   shape: "rect" | "circle",
   roomId: string,
+  socket: WebSocket,
 ) {
   const ctx = canvas.getContext("2d");
 
@@ -26,7 +27,15 @@ export async function initDraw(
 
   if (!ctx) return;
 
-  clearCanvas(existingShapes, canvas, ctx);
+  socket.onmessage = (event) => {
+    const message = JSON.parse(event.data);
+
+    if (message.type === "chat") {
+      const parsedShape = JSON.parse(message.message);
+      existingShapes.push(parsedShape);
+      clearCanvas(existingShapes, canvas, ctx);
+    }
+  };
 
   let clicked = false;
   let startX = 0;
@@ -57,6 +66,13 @@ export async function initDraw(
     }
 
     existingShapes.push(existShape);
+    socket.send(
+      JSON.stringify({
+        type: "chat",
+        message: JSON.stringify(existShape),
+        roomId,
+      }),
+    );
   });
   canvas.addEventListener("mousemove", (e) => {
     if (clicked) {

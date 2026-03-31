@@ -8,9 +8,11 @@ import {
   signinSchema,
 } from "@repo/common/types";
 import { prismaClient } from "@repo/db/client";
+import cors from "cors";
 
 const app = express();
 app.use(express.json());
+app.use(cors());
 
 app.post("/signup", async (req, res) => {
   const parsedData = createUserSchema.safeParse(req.body);
@@ -93,9 +95,9 @@ app.post("/room", middleware, async (req, res) => {
   }
 });
 
-app.get("/chat/:roomId", (req, res) => {
+app.get("/chats/:roomId", async (req, res) => {
   const roomId = Number(req.params.roomId);
-  const messages = prismaClient.chat.findMany({
+  const messages = await prismaClient.chat.findMany({
     where: {
       roomId,
     },
