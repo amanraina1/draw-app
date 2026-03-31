@@ -1,24 +1,11 @@
-"use client";
+import Canvas from "@/components/Canvas";
 
-import { useEffect, useRef } from "react";
-import { initDraw } from "@/draw";
+export default async function CanvasPage({
+  params,
+}: {
+  params: { roomId: string };
+}) {
+  const roomId = (await params).roomId;
 
-export default function Canvas() {
-  const canvasRef = useRef<HTMLCanvasElement | null>(null);
-
-  useEffect(() => {
-    if (canvasRef.current) {
-      initDraw(canvasRef.current);
-    }
-  }, [canvasRef]);
-
-  return (
-    <div>
-      <canvas
-        ref={canvasRef}
-        width={window.innerWidth}
-        height={window.innerHeight}
-      ></canvas>
-    </div>
-  );
+  return <Canvas roomId={roomId} />;
 }

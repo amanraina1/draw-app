@@ -1,3 +1,5 @@
+import { HTTP_BACKEND } from "@/config";
+import axios from "axios";
 type Shape =
   | {
       type: "rect";
@@ -13,15 +15,18 @@ type Shape =
       radius: number;
     };
 
-export function initDraw(canvas: HTMLCanvasElement) {
+export async function initDraw(
+  canvas: HTMLCanvasElement,
+  shape: "rect" | "circle",
+  roomId: string,
+) {
   const ctx = canvas.getContext("2d");
 
-  let existingShapes: Shape[] = [];
+  const existingShapes: Shape[] = await getExistingShapes(roomId);
 
   if (!ctx) return;
 
-  ctx.fillStyle = "rgb(0,0,0)";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
+  clearCanvas(existingShapes, canvas, ctx);
 
   let clicked = false;
   let startX = 0;
@@ -37,7 +42,21 @@ export function initDraw(canvas: HTMLCanvasElement) {
     const width = e.clientX - startX;
     const height = e.clientY - startY;
 
-    existingShapes.push({ type: "rect", x: startX, y: startY, width, height });
+    let existShape: Shape;
+
+    if (shape === "rect") {
+      existShape = { type: "rect", x: startX, y: startY, width, height };
+    } else {
+      const radius = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+      existShape = {
+        type: "circle",
+        centerX: startX,
+        centerY: startY,
+        radius,
+      };
+    }
+
+    existingShapes.push(existShape);
   });
   canvas.addEventListener("mousemove", (e) => {
     if (clicked) {
@@ -46,7 +65,14 @@ export function initDraw(canvas: HTMLCanvasElement) {
 
       clearCanvas(existingShapes, canvas, ctx);
 
-      ctx.fillRect(startX, startY, width, height);
+      if (shape === "rect") {
+        ctx.fillRect(startX, startY, width, height);
+      } else {
+        const radius = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
+        ctx.beginPath();
+        ctx.arc(startX, startY, radius, 0, Math.PI * 2);
+        ctx.fill();
+      }
     }
   });
 }
@@ -61,7 +87,25 @@ function clearCanvas(
 
   existingShapes.forEach((shape) => {
     if (shape.type === "rect") {
-      ctx.fillRect(shape.x, shape.y, shape.width, shape.height);
+      const { x, y, width, height } = shape;
+      ctx.fillRect(x, y, width, height);
+    } else {
+      const { centerX, centerY, radius } = shape;
+
+      ctx.beginPath();
+      ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
+      ctx.fill();
     }
+  });
+}
+
+async function getExistingShapes(roomId: string) {
+  const res = await axios.get(`${HTTP_BACKEND}/chats/${roomId}`);
+  const messages = res.data.messages;
+
+  //   @ts-ignore
+  return messages.map((x) => {
+    const messageData = JSON.parse(x.message);
+    return messageData;
   });
 }
