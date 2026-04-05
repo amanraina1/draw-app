@@ -1,2 +1,4 @@
-export const HTTP_BACKEND = "http://localhost:3001";
-export const WS_URL = "ws://localhost:8080";
+const HOST =
+  typeof window !== undefined ? window.location.hostname : "localhost";
+export const HTTP_BACKEND = `http://${HOST}:3001`;
+export const WS_URL = `ws://${HOST}:8081`;

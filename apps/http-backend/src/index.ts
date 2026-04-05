@@ -108,6 +108,6 @@ app.get("/chats/:roomId", async (req, res) => {
   res.status(200).json({ messages });
 });
 
-app.listen(3001, () => {
+app.listen(3001, "0.0.0.0", () => {
   console.log("App is listening at port: 3001");
 });

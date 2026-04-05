@@ -17,7 +17,7 @@ type Shape =
 
 export async function initDraw(
   canvas: HTMLCanvasElement,
-  shape: "rect" | "circle",
+  shape: string,
   roomId: string,
   socket: WebSocket,
 ) {
@@ -27,15 +27,17 @@ export async function initDraw(
 
   if (!ctx) return;
 
-  socket.onmessage = (event) => {
-    const message = JSON.parse(event.data);
+  if (!socket.onmessage) {
+    socket.onmessage = (event) => {
+      const message = JSON.parse(event.data);
 
-    if (message.type === "chat") {
-      const parsedShape = JSON.parse(message.message);
-      existingShapes.push(parsedShape);
-      clearCanvas(existingShapes, canvas, ctx);
-    }
-  };
+      if (message.type === "chat") {
+        const parsedShape = JSON.parse(message.message);
+        existingShapes.push(parsedShape);
+        clearCanvas(existingShapes, canvas, ctx);
+      }
+    };
+  }
 
   let clicked = false;
   let startX = 0;
@@ -86,8 +88,10 @@ export async function initDraw(
       } else {
         const radius = Math.sqrt(Math.pow(width, 2) + Math.pow(height, 2));
         ctx.beginPath();
+        ctx.strokeStyle = "rgb(255, 255, 255)";
         ctx.arc(startX, startY, radius, 0, Math.PI * 2);
-        ctx.fill();
+        ctx.stroke();
+        ctx.closePath();
       }
     }
   });
@@ -109,8 +113,10 @@ function clearCanvas(
       const { centerX, centerY, radius } = shape;
 
       ctx.beginPath();
+      ctx.strokeStyle = "rgb(255, 255, 255)";
       ctx.arc(centerX, centerY, radius, 0, Math.PI * 2);
-      ctx.fill();
+      ctx.stroke();
+      ctx.closePath();
     }
   });
 }
