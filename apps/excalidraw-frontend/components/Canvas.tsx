@@ -1,7 +1,9 @@
 "use client";
-import { initDraw } from "@/draw";
+import { Game } from "@/draw/Game";
 import Toolbar from "@/miniComp/Toolbar";
 import { useEffect, useRef, useState } from "react";
+
+export type Tool = "circle" | "pencil" | "rect";
 
 export default function Canvas({
   roomId,
@@ -11,12 +13,21 @@ export default function Canvas({
   socket: WebSocket;
 }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [shape, setShape] = useState<string>("rect");
+  const [game, setGame] = useState<Game>();
+  const [selectedTool, setSelectedTool] = useState<Tool>("rect");
+
   useEffect(() => {
-    if (canvasRef.current) {
-      initDraw(canvasRef.current, shape, roomId, socket);
-    }
-  }, [shape]);
+    game?.setTool(selectedTool);
+  }, [selectedTool, game]);
+
+  useEffect(() => {
+    if (!canvasRef.current) return;
+
+    const g = new Game(canvasRef.current, roomId, socket);
+    setGame(g);
+
+    return () => g.destroyListeners();
+  }, []);
 
   return (
     <div>
@@ -25,7 +36,7 @@ export default function Canvas({
         height={window.innerHeight}
         ref={canvasRef}
       ></canvas>
-      <Toolbar shape={shape} setShape={setShape} />
+      <Toolbar tool={selectedTool} setTool={setSelectedTool} />
     </div>
   );
 }
